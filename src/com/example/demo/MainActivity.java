@@ -3,6 +3,7 @@ package com.example.demo;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Inet4Address;
@@ -10,6 +11,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+import android.R.integer;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -35,6 +37,7 @@ import android.net.IpConfiguration.IpAssignment;
 import android.net.IpConfiguration.ProxySettings;
 
 public class MainActivity extends Activity {
+	public static Activity instance;
 	public EditText editApk;
 	public Button buttonApk;
 	public String apkPath;
@@ -52,6 +55,7 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		instance = this;
 		
 		editApk = (EditText) findViewById(R.id.editApk);
 		buttonApk = (Button) findViewById(R.id.buttonApk);
@@ -61,8 +65,7 @@ public class MainActivity extends Activity {
 			public void onClick(View v) {
 				String path = editApk.getText().toString();
 				if (!new File(path).exists()) {
-					Toast.makeText(getApplicationContext(), "no apk file",
-						     Toast.LENGTH_SHORT).show();
+					log("no apk file");
 					return;
 				}
 				
@@ -99,7 +102,7 @@ public class MainActivity extends Activity {
 		
 		mEthManager = (EthernetManager) getSystemService(Context.ETHERNET_SERVICE);
 		if (mEthManager == null) {
-			Log.e("demo_trace", "mEthManager:"+mEthManager);
+			log("mEthManager:"+mEthManager);
 			return;
 		}
 		
@@ -129,13 +132,14 @@ public class MainActivity extends Activity {
         InetAddress gatewayAddr = getIPv4Address(editGateway.getText().toString()); 
         InetAddress dnsAddr = getIPv4Address(editDns1.getText().toString());
 		 
-        if (inetAddr.getAddress().toString().isEmpty() || prefixLength ==0 || gatewayAddr.toString().isEmpty()
-        		|| dnsAddr.toString().isEmpty()) {
-        		Log.e("demo_trace", "ip,mask or dnsAddr is wrong");
+        if (inetAddr == null || inetAddr.getAddress().toString().isEmpty() || prefixLength == 0 || 
+        		gatewayAddr == null || gatewayAddr.toString().isEmpty() || 
+        		dnsAddr == null || dnsAddr.toString().isEmpty()) {
+        		log("ip, smask or dnsAddr is wrong");
         		return false;
 		}
 		  
-        String dnsStr2= editDns2.getText().toString();  
+        String dnsStr2 = editDns2.getText().toString();  
         mStaticIpConfiguration.ipAddress = new LinkAddress(inetAddr, prefixLength);
         mStaticIpConfiguration.gateway=gatewayAddr;
         mStaticIpConfiguration.dnsServers.add(dnsAddr);
@@ -148,37 +152,40 @@ public class MainActivity extends Activity {
         return true;
     }
 	public void showEthernet(boolean isDHCP) {
-		Log.e("demo_trace", "isDHCP:"+isDHCP);
+		log("isDHCP:"+isDHCP);
 		if (isDHCP) {
 			layoutStatic.setVisibility(View.GONE);
 		} else {
-			StaticIpConfiguration staticIpConfiguration = mEthManager.getConfiguration().getStaticIpConfiguration();
-			
-			if (staticIpConfiguration == null) {
-				editIpAddress.setText("");
-				editNetMask.setText("");
-				editGateway.setText("");
-				editDns1.setText("");
-				editDns2.setText("");
-				return ;
-			}
-			LinkAddress ipAddress = staticIpConfiguration.ipAddress;
-			InetAddress gateway   = staticIpConfiguration.gateway;
-			ArrayList<InetAddress> dnsServers=staticIpConfiguration.dnsServers;
-			
-			if (ipAddress !=null) {
-				editIpAddress.setText(ipAddress.getAddress().getHostAddress());
-				editNetMask.setText(interMask2String(ipAddress.getPrefixLength()));
-			}
-			if (gateway !=null) {
-				editGateway.setText(gateway.getHostAddress());
-			}
-			editDns1.setText(dnsServers.get(0).getHostAddress());
-			if (dnsServers.size() > 1) {
-				editDns2.setText(dnsServers.get(1).getHostAddress());
-			}
-			
 			layoutStatic.setVisibility(View.VISIBLE);
+			try {
+				StaticIpConfiguration staticIpConfiguration = mEthManager.getConfiguration().getStaticIpConfiguration();
+				
+				if (staticIpConfiguration == null) {
+					editIpAddress.setText("");
+					editNetMask.setText("");
+					editGateway.setText("");
+					editDns1.setText("");
+					editDns2.setText("");
+					return ;
+				}
+				LinkAddress ipAddress = staticIpConfiguration.ipAddress;
+				InetAddress gateway   = staticIpConfiguration.gateway;
+				ArrayList<InetAddress> dnsServers=staticIpConfiguration.dnsServers;
+				
+				if (ipAddress !=null) {
+					editIpAddress.setText(ipAddress.getAddress().getHostAddress());
+					editNetMask.setText(interMask2String(ipAddress.getPrefixLength()));
+				}
+				if (gateway !=null) {
+					editGateway.setText(gateway.getHostAddress());
+				}
+				editDns1.setText(dnsServers.get(0).getHostAddress());
+				if (dnsServers.size() > 1) {
+					editDns2.setText(dnsServers.get(1).getHostAddress());
+				}
+			} catch (Exception e) {
+				log("exception1:", e);
+			}
 		}
 	}
 	public String interMask2String (int prefixLength) {
@@ -211,6 +218,7 @@ public class MainActivity extends Activity {
         try {
             return (Inet4Address) NetworkUtils.numericToInetAddress(text);
         } catch (Exception e) {
+        		log("exception2:", e);
             return null;
         }
     }
@@ -224,7 +232,7 @@ public class MainActivity extends Activity {
 	    	 */
       	Pattern pattern = Pattern.compile("(^((\\d|[01]?\\d\\d|2[0-4]\\d|25[0-5])\\.){3}(\\d|[01]?\\d\\d|2[0-4]\\d|25[0-5])$)|^(\\d|[1-2]\\d|3[0-2])$");
 	    	if (pattern.matcher(maskStr).matches() == false) {
-	    		Log.e("demo_trace", "subMask is error");
+	    		log("subMask is error");
 	    		return 0;
 	    	}
     	
@@ -248,7 +256,7 @@ public class MainActivity extends Activity {
 	    try {
 	        Settings.Global.putInt(getContentResolver(), Settings.Global.INSTALL_NON_MARKET_APPS, 1);
         } catch (Exception e) {
-        		Log.e("demo_trace", "exception:"+e);
+        		log("exception3:", e);
         }
 		if (execCommand(new String[]{"pm install -r " + apkPath})) {
 			result = true;
@@ -281,7 +289,7 @@ public class MainActivity extends Activity {
                     continue;
                 }
 
-                Log.e("demo_trace", "exec_cmd:" + command);
+                log("exec_cmd:" + command);
                 os.write(command.getBytes());
                 os.writeBytes("\n");
                 os.flush();
@@ -307,9 +315,9 @@ public class MainActivity extends Activity {
                 outputs[0] = successMsg.toString();
                 outputs[1] = errorMsg.toString();
             }
-            Log.e("demo_trace", "exec_res:" + successMsg.toString() + ":" + errorMsg.toString());
+            log("exec_res:" + successMsg.toString() + ":" + errorMsg.toString());
         } catch (Exception e) {
-        		Log.e("demo_trace", "exception:"+e);
+        		log("exception4:", e);
         } finally {
             try {
                 if (os != null) {
@@ -322,7 +330,7 @@ public class MainActivity extends Activity {
                     errorResult.close();
                 }
             } catch (IOException e) {
-            		Log.e("demo_trace", "exception:"+e);
+            		log("exception5:", e);
             }
 
             if (process != null) {
@@ -331,4 +339,23 @@ public class MainActivity extends Activity {
         }
         return res;
     }
+	public static void log(String info) {
+		Log.e("demo_trace", info);
+		Toast.makeText(instance, info, Toast.LENGTH_SHORT).show();
+		try {
+			FileOutputStream fos = instance.openFileOutput("demo_trace.txt", MODE_APPEND);
+			fos.write(info.getBytes());
+			fos.write("\n".getBytes());
+			fos.close();
+		} catch (Exception e) {
+		}
+	}
+    public static void log(String info, Exception e) {
+        StringBuilder stringBuilder = new StringBuilder(info);
+        stringBuilder.append("_Exception:").append(e.getMessage()).append("\t");
+		for (int i = 0; i < e.getStackTrace().length; ++i) {
+			stringBuilder.append(i).append(":").append(e.getStackTrace()[i].toString()).append("\n");
+		}
+		log(stringBuilder.toString());
+	}
 }

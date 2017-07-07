@@ -32,6 +32,42 @@
 		    android:text="StaticIP" />
 	</RadioGroup>
 	<LinearLayout 
+	    android:id="@+id/layoutDHCP"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="vertical" >
+	 	<TextView
+	        android:id="@+id/textIpAddress"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:text="" />
+	 	<TextView
+	        android:id="@+id/textNetMask"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:text="" />
+	 	<TextView
+	        android:id="@+id/textGateway"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:text="" />
+	 	<TextView
+	        android:id="@+id/textDns1"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:text="" />
+	 	<TextView
+	        android:id="@+id/textDns2"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:text="" />
+	 	<TextView
+	        android:id="@+id/textMac"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:text="" />
+	</LinearLayout>
+	<LinearLayout 
 	    android:id="@+id/layoutStatic"
 	    android:layout_width="fill_parent"
 	    android:layout_height="wrap_content"

@@ -16,7 +16,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,6 +28,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.Toast;
 import android.net.EthernetManager;
@@ -33,10 +36,14 @@ import android.net.IpConfiguration;
 import android.net.LinkAddress;
 import android.net.NetworkUtils;
 import android.net.StaticIpConfiguration;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.net.IpConfiguration.IpAssignment;
 import android.net.IpConfiguration.ProxySettings;
 
 public class MainActivity extends Activity {
+	private final static String nullIpInfo = "0.0.0.0";
+	
 	public static Activity instance;
 	public EditText editApk;
 	public Button buttonApk;
@@ -50,6 +57,13 @@ public class MainActivity extends Activity {
 	public EditText editDns1;
 	public EditText editDns2;
 	public Button buttonCommit;
+	public LinearLayout layoutDHCP; 
+	public TextView textIpAddress;
+	public TextView textNetMask;
+	public TextView textGateway;
+	public TextView textDns1;
+	public TextView textDns2;
+	public TextView textMac;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +113,14 @@ public class MainActivity extends Activity {
 		editDns1 = (EditText) findViewById(R.id.editDns1);
 		editDns2 = (EditText) findViewById(R.id.editDns2);
 		buttonCommit = (Button) findViewById(R.id.buttonCommit);
+		
+		layoutDHCP = (LinearLayout) findViewById(R.id.layoutDHCP);
+		textIpAddress = (TextView) findViewById(R.id.textIpAddress);
+		textNetMask = (TextView) findViewById(R.id.textNetMask);
+		textGateway = (TextView) findViewById(R.id.textGateway);
+		textDns1 = (TextView) findViewById(R.id.textDns1);
+		textDns2 = (TextView) findViewById(R.id.textDns2);
+		textMac = (TextView) findViewById(R.id.textMac);
 		
 		mEthManager = (EthernetManager) getSystemService(Context.ETHERNET_SERVICE);
 		if (mEthManager == null) {
@@ -151,12 +173,62 @@ public class MainActivity extends Activity {
         mEthManager.setConfiguration(mIpConfiguration);
         return true;
     }
+    public String getLocalMacAddressFromWifiInfo() {
+        WifiManager wifi = (WifiManager) instance.getSystemService(Context.WIFI_SERVICE);  
+        WifiInfo info = wifi.getConnectionInfo();  
+        return info.getMacAddress(); 
+    }
 	public void showEthernet(boolean isDHCP) {
 		log("isDHCP:"+isDHCP);
 		if (isDHCP) {
 			layoutStatic.setVisibility(View.GONE);
+			layoutDHCP.setVisibility(View.VISIBLE);
+			try {
+				String tempIpInfo;
+				String iface = "eth0";
+					
+				tempIpInfo = SystemProperties.get("dhcp."+ iface +".ipaddress");
+
+				if (TextUtils.isEmpty(tempIpInfo)) { 
+					tempIpInfo = nullIpInfo;
+			    	} 
+				textIpAddress.setText("ip:"+tempIpInfo);
+							
+				tempIpInfo = SystemProperties.get("dhcp."+ iface +".mask");	
+				if (TextUtils.isEmpty(tempIpInfo)) { 
+					tempIpInfo = nullIpInfo;
+			    	} 
+				textNetMask.setText("netmask:"+tempIpInfo);
+								
+				tempIpInfo = SystemProperties.get("dhcp."+ iface +".gateway");	
+				if (TextUtils.isEmpty(tempIpInfo)) { 
+					tempIpInfo = nullIpInfo;
+			    	}
+				textGateway.setText("gateway:"+tempIpInfo);
+
+				tempIpInfo = SystemProperties.get("dhcp."+ iface +".dns1");
+				if (TextUtils.isEmpty(tempIpInfo)) { 
+					tempIpInfo = nullIpInfo;
+			    	}
+				textDns1.setText("dns1:"+tempIpInfo);
+
+				tempIpInfo = SystemProperties.get("dhcp."+ iface +".dns2");
+				if (TextUtils.isEmpty(tempIpInfo)) { 
+					tempIpInfo = nullIpInfo;
+			    	}
+				textDns2.setText("dns2:"+tempIpInfo);
+				
+				tempIpInfo = getLocalMacAddressFromWifiInfo();
+				if (TextUtils.isEmpty(tempIpInfo)) { 
+					tempIpInfo = nullIpInfo;
+			    	}
+				textMac.setText("mac:"+tempIpInfo);
+			} catch (Exception e) {
+				log("exception11:", e);
+			}
 		} else {
 			layoutStatic.setVisibility(View.VISIBLE);
+			layoutDHCP.setVisibility(View.GONE);
 			try {
 				StaticIpConfiguration staticIpConfiguration = mEthManager.getConfiguration().getStaticIpConfiguration();
 				

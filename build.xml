@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Demo" default="start">
+    <property file="local.properties" />
+    <property file="ant.properties" />
+    <property environment="env" />
+    <condition property="sdk.dir" value="${env.ANDROID_HOME}">
+        <isset property="env.ANDROID_HOME" />
+    </condition>
+    <loadproperties srcFile="project.properties" />
+    <fail 
+        message="sdk.dir is missing. Make sure to generate local.properties using 'android update project' or to inject it through the ANDROID_HOME environment variable."
+        unless="sdk.dir" />
+    <import file="${sdk.dir}/tools/ant/build.xml" />
+    <tstamp>
+        <format property="dt" pattern="yyyyMMdd"/>
+    </tstamp>
+    <target name="-post-build">      
+        <java jar="script/ota/signapk.jar" fork="true">
+            <arg value="script/ota/platform.x509.pem" />
+            <arg value="script/ota/platform.pk8" />
+            <arg value="${out.packaged.file}" />
+            <arg value="${out.final.file}" />
+        </java>
+    </target>
+    <target name="start" depends="release">
+        <exec executable="sh">
+            <arg value="-c" />
+            <arg value="script/build.sh" /> 
+        </exec>
+    </target>
+</project>

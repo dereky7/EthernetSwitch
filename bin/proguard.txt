@@ -1,0 +1,3 @@
+# view AndroidManifest.xml #generated:62
+-keep class com.example.demo.MainActivity { <init>(...); }
+

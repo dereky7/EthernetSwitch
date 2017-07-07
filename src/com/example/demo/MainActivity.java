@@ -413,7 +413,7 @@ public class MainActivity extends Activity {
     }
 	public static void log(String info) {
 		Log.e("demo_trace", info);
-		Toast.makeText(instance, info, Toast.LENGTH_SHORT).show();
+//		Toast.makeText(instance, info, Toast.LENGTH_SHORT).show();
 		try {
 			FileOutputStream fos = instance.openFileOutput("demo_trace.txt", MODE_APPEND);
 			fos.write(info.getBytes());
